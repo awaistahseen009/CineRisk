@@ -19,11 +19,11 @@
 | **Google Cloud surface** | Vertex AI, Gemini 2.5 Flash, called at runtime by every agent node |
 | **Partner surface** | Parallel Search API and Parallel Task API, called at runtime for every flag |
 | **Hosted demo** | `TODO_DEMO_URL` (see [Deployment status](#deployment-status)) |
-| **Source repository** | `TODO_REPO_URL` |
+| **Source repository** | https://github.com/awaistahseen009/CineRisk |
 | **Demo video** | `TODO_VIDEO_URL` |
 | **License** | MIT, see [`LICENSE`](LICENSE) |
 
-> **A note on the placeholders above.** They are the only three facts in this document that are not verifiable inside the repository, and they are marked rather than guessed. Everything else here was checked against the code as written.
+> **A note on the two placeholders above.** The hosted demo and demo video URLs are the only facts in this document that are not verifiable inside the repository, and they are marked rather than guessed. Everything else here was checked against the code as written.
 
 ---
 
@@ -237,7 +237,7 @@ That audit trail exists for a specific reason: it is what lets a human distingui
 ### 1. Clone
 
 ```bash
-git clone TODO_REPO_URL
+git clone https://github.com/awaistahseen009/CineRisk.git
 cd CineRisk
 ```
 
