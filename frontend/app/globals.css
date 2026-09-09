@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-layout: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  /* No opaque background here on purpose -- the ground color, dot-grid,
+     and ambient glow all live on the fixed .ambient-bg layer instead (see
+     below), so nothing painted on body can block it. */
+  background: transparent;
+  color: #f3f4f6;
+  font-feature-settings: "cv11", "ss01";
+  text-wrap: pretty;
+}
+
+::selection {
+  background: rgba(94, 106, 210, 0.35);
+  color: #f3f4f6;
+}
+
+/* Thin, quiet scrollbar consistent with the hairline visual language */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  border: 2px solid #08090a;
+}
+
+/* Accordion-style expand/collapse (source citations, filters) --
+   height:auto can't transition, so we drive it from a measured
+   max-height set via inline style by the component. */
+.accordion-panel {
+  overflow: hidden;
+  transition:
+    grid-template-rows 220ms var(--ease-drawer),
+    opacity 180ms var(--ease-out);
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.accordion-panel[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.accordion-panel > div {
+  min-height: 0;
+}
+
+/* Press feedback -- consistent scale-down across every pressable element */
+.press-feedback {
+  transition: transform 160ms var(--ease-out);
+}
+.press-feedback:active {
+  transform: scale(0.97);
+}
+
+/* Marching-dash flow effect on an actively-transmitting connector edge --
+   state indication (data is moving right now), not decoration. */
+@keyframes dash {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+/* Slow traveling pulse on the hero diagram's connectors -- ambient life
+   ("a signal moving through the pipeline"), not a status indicator, so it
+   runs much slower and dimmer than .dash above. stroke-dasharray "3 26"
+   sums to 29; offsetting by exactly that wraps seamlessly. */
+@keyframes hero-pulse {
+  to {
+    stroke-dashoffset: -29;
+  }
+}
+
+/* Global ambient field -- fixed behind ALL pages, not scoped to the
+   homepage hero. This is what gives the whole product depth instead of
+   flat black. The actual light shapes (flowing indigo/violet/amber
+   ribbons, not circular glows) are the AmbientRibbons SVG component,
+   rendered as a child -- see layout.tsx. Fixed positioning is what makes
+   this the connective tissue across sections: one continuous graphic
+   behind everything, not a per-section repaint. */
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  /* Real ground color + dot-grid live here (not on body) so nothing can
+     paint over this layer and hide the glow/grain stacked on top of it. */
+  background-color: #08090a;
+  background-image: radial-gradient(circle, rgba(176, 180, 187, 0.16) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.ambient-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Vignette -- a very faint darkening toward the viewport edges, the kind of
+   cue a real photographed/lit scene has and a flat digital gradient never
+   does. Fixed, so it reads as one continuous frame around the whole page,
+   not a per-section effect. */
+.ambient-bg > .vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.38) 100%);
+}
+
+/* Hero lighting -- deliberately NOT one centered orb (that reads as a
+   sticker/prop behind the text, not lighting). Several small, soft,
+   asymmetric sources instead, low enough in peak opacity that the
+   dot-grid underneath stays visible through all of them -- the grid is
+   part of the product's visual identity (it's the same texture the node
+   diagrams sit on) and glow must never wash it out. */
+.hero-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(26% 30% at 18% -6%, rgba(147, 82, 221, 0.28), transparent 70%),
+    radial-gradient(20% 24% at 68% 4%, rgba(110, 120, 224, 0.22), transparent 72%),
+    radial-gradient(16% 20% at 92% 30%, rgba(214, 84, 173, 0.12), transparent 74%),
+    radial-gradient(22% 22% at 8% 55%, rgba(94, 106, 210, 0.1), transparent 72%);
+}
+
+/* Slow ambient drift for the live-run page ground -- signals "the system
+   is working" between discrete node-state changes, without competing with
+   the tree diagram for attention. */
+@keyframes ambient-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-2%, 2%) scale(1.05); }
+}
+.ambient-field {
+  position: absolute;
+  inset: -10%;
+  background: radial-gradient(45% 40% at 50% 30%, rgba(94, 106, 210, 0.1), transparent 70%);
+  animation: ambient-drift 14s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

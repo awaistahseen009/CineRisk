@@ -1,0 +1,40 @@
+# Web framework
+fastapi>=0.115
+uvicorn[standard]>=0.30
+
+# Multi-agent orchestration
+langgraph>=0.2
+langchain-core>=0.3
+langchain-google-vertexai>=2.0   # ChatVertexAI
+
+# Google Cloud Agent Runtime (Gemini Enterprise Agent Platform)
+google-cloud-aiplatform[agent_engines,langchain]>=1.70
+
+# MCP (Parallel API wrapped as an MCP tool server)
+fastmcp>=0.2
+mcp>=1.0
+parallel-web>=1.0.1   # official Parallel SDK -- POST /v1/search
+
+# Schema validation
+pydantic>=2.8
+pydantic-settings>=2.4
+
+# PDF export of finished reports
+reportlab>=4.0
+
+# Document extraction for uploaded scripts
+pypdf>=5.0        # .pdf
+python-docx>=1.1  # .docx
+
+# Database
+sqlmodel>=0.0.22
+psycopg[binary]>=3.2   # Neon serverless Postgres driver
+asyncpg>=0.29
+
+# Caching / live status
+upstash-redis>=1.1   # Upstash's official REST SDK (matches REST_URL/REST_TOKEN)
+
+# Testing
+pytest>=8.3
+pytest-asyncio>=0.24
+httpx>=0.27
