@@ -1,0 +1,15 @@
+# Never ship or upload local credentials in the build context. Without this
+# file, `gcloud builds submit` uploads .env to Cloud Build's staging bucket
+# even though the Dockerfile never COPYs it.
+.env
+.env.*
+!.env.example
+
+# Local scratch and caches
+.runid*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+tests/

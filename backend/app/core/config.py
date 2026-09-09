@@ -20,6 +20,16 @@ class Settings(BaseSettings):
     # is now passed explicitly to ChatVertexAI -- previously it was set here
     # but never handed to the client, so it silently did nothing.
     google_cloud_location: str = "global"
+    # Vertex AI Agent Engine RESERVES the names GOOGLE_CLOUD_PROJECT and
+    # GOOGLE_CLOUD_LOCATION and injects its own values (the engine's own
+    # region, e.g. us-central1). That would silently drag every Gemini call
+    # off the global endpoint and back onto the tight per-region quota that
+    # produced the 429 RESOURCE_EXHAUSTED failures this project already
+    # fixed once. This non-reserved override wins when set, so the deployed
+    # engine can keep model calls on "global". Unset everywhere else, in
+    # which case google_cloud_location applies unchanged.
+    cinerisk_vertex_location: str = ""
+
     gemini_model: str = "gemini-2.5-flash"
     # Gemini 2.5 models "think" before answering by default, which costs real
     # latency and extra output tokens on every one of the ~13 calls a run
@@ -61,6 +71,11 @@ class Settings(BaseSettings):
     # Upstash Redis
     upstash_redis_rest_url: str = ""
     upstash_redis_rest_token: str = ""
+
+    @property
+    def vertex_location(self) -> str:
+        """Location handed to ChatVertexAI. See cinerisk_vertex_location."""
+        return self.cinerisk_vertex_location or self.google_cloud_location
 
     @property
     def cors_origin_list(self) -> list[str]:

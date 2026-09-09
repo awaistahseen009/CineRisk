@@ -158,7 +158,7 @@ async def run_specialist(
         llm = ChatVertexAI(
             model=settings.gemini_model,
             project=settings.google_cloud_project,
-            location=settings.google_cloud_location,
+            location=settings.vertex_location,
             max_retries=GEMINI_MAX_RETRIES,
             thinking_budget=settings.gemini_thinking_budget,
         )

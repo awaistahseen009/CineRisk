@@ -40,3 +40,11 @@ Project_Description.txt
 # Local scratch / build artifacts
 backend/.runid*
 frontend/tsconfig.tsbuildinfo
+
+# Terraform (state is remote in GCS; tfvars holds real credentials)
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+terraform/*.tfvars.json
+terraform/tfplan*

@@ -55,7 +55,7 @@ async def supervisor_node(state: GraphState) -> dict:
     llm = ChatVertexAI(
         model=settings.gemini_model,
         project=settings.google_cloud_project,
-        location=settings.google_cloud_location,
+        location=settings.vertex_location,
         max_retries=10,
         thinking_budget=settings.gemini_thinking_budget,
     )
