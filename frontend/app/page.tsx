@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Layers, Link2, ScanEye, ShieldCheck, Timer } from "lucide-react";
 import PipelineVisual from "@/components/PipelineVisual";
 import ProblemSection from "@/components/ProblemSection";
+import CostSection from "@/components/CostSection";
 import StackSection from "@/components/StackSection";
 import UploadForm from "@/components/UploadForm";
 import { EASE_LAYOUT } from "@/lib/treeLayout";
@@ -149,6 +150,22 @@ export default function HomePage() {
         <div className="mt-10">
           <ProblemSection />
         </div>
+      </section>
+
+      {/* The price tag, immediately after the gallery of cases: the carousel
+          shows WHAT went wrong, this shows what it cost. Every figure links
+          out to the original reporting, and settlements are labelled
+          separately from amounts merely sued for. */}
+      <section className="relative mx-auto max-w-5xl px-6 pb-28">
+        <Reveal>
+          <SectionLabel
+            kicker="What it costs"
+            sub="These are not projections. They are settlements actually paid, an amount sued for, and a campaign withdrawn, each one linked to the original reporting. Two of these figures were retrieved by Parallel during a real CineRisk audit run."
+          >
+            The bill arrives after release.
+          </SectionLabel>
+        </Reveal>
+        <CostSection />
       </section>
 
       <section className="relative mx-auto max-w-5xl px-6 pb-28">
