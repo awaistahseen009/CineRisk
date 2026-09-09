@@ -18,12 +18,14 @@
 | **Partner track** | **Parallel** |
 | **Google Cloud surface** | Vertex AI, Gemini 2.5 Flash, called at runtime by every agent node |
 | **Partner surface** | Parallel Search API and Parallel Task API, called at runtime for every flag |
-| **Hosted demo** | `TODO_DEMO_URL` (see [Deployment status](#deployment-status)) |
+| **Hosted demo** | https://cinerisk.vercel.app |
+| **Demo video** | https://youtu.be/dvQULf6n1wQ |
 | **Source repository** | https://github.com/awaistahseen009/CineRisk |
-| **Demo video** | `TODO_VIDEO_URL` |
+| **Live API** | https://cinerisk-backend-gxcnkkt72a-uc.a.run.app (Cloud Run) |
+| **Agent Engine** | `projects/35260314620/locations/us-central1/reasoningEngines/1012621072123559936` |
 | **License** | MIT, see [`LICENSE`](LICENSE) |
 
-> **A note on the two placeholders above.** The hosted demo and demo video URLs are the only facts in this document that are not verifiable inside the repository, and they are marked rather than guessed. Everything else here was checked against the code as written.
+> Everything in this document was checked against the code as written and against the deployed infrastructure, not recalled. Where something is deployed but not yet serving production traffic, this README says so explicitly rather than rounding up.
 
 ---
 
@@ -140,11 +142,28 @@ Everything listed here is imported and called in the code, not merely referenced
 
 - **Vertex AI**, via `ChatVertexAI` from **`langchain-google-vertexai`**. This is the package actually imported by the running pipeline: see `backend/app/agents/nodes/_specialist_base.py` and `supervisor.py`. Model: **`gemini-2.5-flash`**, with `thinking_budget=0` for latency, authenticated by Application Default Credentials against `GOOGLE_CLOUD_PROJECT`.
 - **`GOOGLE_CLOUD_LOCATION=global`** deliberately. See [What we learned](#7-what-we-learned).
-- **`google-cloud-aiplatform[agent_engines,langchain]`** is present in `requirements.txt` and is imported by `backend/app/agents/deploy.py`, which wraps the compiled graph in `vertexai.preview.reasoning_engines.LanggraphAgent` for deployment to Agent Engine.
+- **`google-cloud-aiplatform[agent_engines,langchain]`** is present in `requirements.txt` and is imported by `backend/app/agents/deploy.py`, which wraps the compiled graph in `vertexai.agent_engines.LanggraphAgent` (the current surface, not the older `vertexai.preview.reasoning_engines`) and deploys it to Agent Engine.
 
 #### Deployment status
 
-**Honest statement, because a judge will check this:** the Agent Engine deployment path **exists in code and has not been deployed.** `deploy.py` builds a `LanggraphAgent` around the same `build_graph()` used in production and calls `ReasoningEngine.create(...)`, but querying `ReasoningEngine.list()` against this project returns **zero deployed engines**. The demo runs the identical compiled LangGraph graph **in-process behind FastAPI**.
+**The Agent Engine deployment is live.** `python -m app.agents.deploy` was executed against project `cinerisk-hackathon` and created:
+
+```
+projects/35260314620/locations/us-central1/reasoningEngines/1012621072123559936
+display name: cinerisk-audit-agent
+operations:   query, stream_query, get_state, update_state, get_state_history
+```
+
+That was confirmed by an independent `agent_engines.list()` call, not just by the deploy script's own output. It wraps the same `build_graph()` the application uses, via `LanggraphAgent(runnable_builder=...)`, packaged with `extra_packages=["app"]` and running as the `cinerisk-backend` service account with its Secret Manager grants.
+
+**What is deliberately not claimed:** production traffic does not run through that engine. The hosted demo executes the identical compiled graph **in-process behind FastAPI on Cloud Run**, which is what the live API URL above points at. The deployed engine has been created and verified as queryable; a full audit has not been driven end to end through its `query` path. Both execute the same graph and both call Vertex AI at runtime.
+
+Two things worth recording, because the obvious version of this deployment does not work:
+
+* `LanggraphAgent.__init__` accepts no `graph` argument, so the intuitive call raises `TypeError` before reaching GCP. The graph has to arrive through `runnable_builder`.
+* Agent Engine **reserves** `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION` and rejects them with `FAILED_PRECONDITION`, injecting its own region instead. Simply dropping them is a silent regression, because the injected region pulls Gemini calls off the global endpoint and back onto the tight per-region quota described in [What we learned](#7-what-we-learned). That preference travels as `CINERISK_VERTEX_LOCATION` (see `Settings.vertex_location`).
+
+The surrounding infrastructure is Terraform (`terraform/`), with remote state in GCS: Artifact Registry, a dedicated Cloud Run runtime service account, three Secret Manager secrets mounted as secret env vars, and the Agent Engine staging bucket.
 
 What that does and does not change: it does **not** change the Google Cloud dependency, because every model call in every node goes to Vertex AI at runtime either way. It changes **where the graph's process lives**. If deployment is attempted, three things in `deploy.py` need fixing first, and they are known: `requirements=["-r requirements.txt"]` is not a valid requirement spec for the create call, there is no environment or secret plumbing for a remote engine (it would have no `PARALLEL_API_KEY`, `DATABASE_URL`, or Redis credentials), and `vertexai.preview.reasoning_engines` is the older surface. That work was not finished, so this README does not claim it was.
 
@@ -349,7 +368,7 @@ cd backend && python -m app.mcp.parallel_server
 
 ## 8. Limitations and honest caveats
 
-- **Agent Engine is coded, not deployed.** Stated in full under [Deployment status](#deployment-status). The graph runs in-process behind FastAPI for the demo. Vertex AI is still called at runtime by every node.
+- **The deployed Agent Engine is not what serves the demo.** It is genuinely deployed and queryable (resource ID under [Deployment status](#deployment-status)), but the hosted app runs the same compiled graph in-process behind FastAPI on Cloud Run. A full audit has not been driven through the engine's `query` path end to end.
 - **The fast path is shallow by design.** Search API grounding takes seconds and will miss precedent that a deeper search would find. That is the trade for a usable interactive run. Deep verification and deep research exist precisely because of it, and they cost minutes, not seconds.
 - **Grounding is only as good as the query the model writes.** Stage 1 proposes the search string. A poorly framed query produces a legitimately empty result set that looks identical to a genuine absence of precedent. The tool cannot fully solve this, so it exposes it: the query and the result count are shown on every flag.
 - **English only.** Segmentation heuristics assume English script conventions, and grounding searches are English-language.
